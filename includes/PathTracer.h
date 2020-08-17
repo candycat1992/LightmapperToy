@@ -169,7 +169,7 @@ function vector PathTrace(PathTracerParams params; Ray ray)
                 // Compute both BRDF's
                 vector brdf = 0.0;
 
-                if (enableSpecularSampling < 0)
+                if (enableDiffuseSampling > 0)
                 {
                     brdf += diffuseColor / PI;
                 }
