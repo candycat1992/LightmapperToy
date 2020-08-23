@@ -1,5 +1,9 @@
 #include "$HIP/includes/Sampling.h"
 
+#define MAT_TYPE_LIGHT      0
+#define MAT_TYPE_STATIC     1
+#define MAT_TYPE_MOVABLE    2
+
 // =================================================
 // Helpers
 // =================================================
@@ -16,13 +20,15 @@ function vector SampleEnvironment(vector rayDir)
 
 struct PathTracerParams
 {
-    int seed = -1;
+    int geomIndex = 0;
+    int seed = 0;
+    int enableDiffuse = 1;
+    int enableSpecular = 1;
+    int enableAlbedo = 1;
     int maxBounces = 8;
-
     float rayPosNormalNudge = 0.001;
     float rayMinDistance = 0.001;
     float rayMaxDistance = 10000.0;
-
     int russianRouletteDepth = -1;
     float russianRouletteProbability = 0.5f;
 };
@@ -35,6 +41,7 @@ struct Ray
 
 struct MaterialInfo
 {
+    int type;
     vector basecolor;
     float specular;
     float metallic;
@@ -57,7 +64,7 @@ function RayHitInfo RayIntersect(PathTracerParams params; Ray ray)
     RayHitInfo hitInfo;
 
     vector hitPos, hitUVW;
-    int hitPrim = intersect(1, ray.origin + ray.direction * params.rayMinDistance, ray.direction * params.rayMaxDistance, hitPos, hitUVW);
+    int hitPrim = intersect(params.geomIndex, ray.origin + ray.direction * params.rayMinDistance, ray.direction * params.rayMaxDistance, hitPos, hitUVW);
 
     if (hitPrim < 0)
     {
@@ -67,20 +74,16 @@ function RayHitInfo RayIntersect(PathTracerParams params; Ray ray)
     {
         hitInfo.hitten = 1;
         hitInfo.pos = hitPos;
-        hitInfo.normal = primuv(1, 'N', hitPrim, hitUVW);
-        hitInfo.tangent = primuv(1, 'tangentu', hitPrim, hitUVW);
-        hitInfo.bitangent = primuv(1, 'tangentv', hitPrim, hitUVW);
+        hitInfo.normal = primuv(params.geomIndex, 'N', hitPrim, hitUVW);
+        hitInfo.tangent = primuv(params.geomIndex, 'tangentu', hitPrim, hitUVW);
+        hitInfo.bitangent = primuv(params.geomIndex, 'tangentv', hitPrim, hitUVW);
 
-        hitInfo.material.basecolor  = primuv(1, 'basecolor', hitPrim, hitUVW);
-        hitInfo.material.specular   = primuv(1, 'specular', hitPrim, hitUVW);
-        hitInfo.material.metallic   = primuv(1, 'metallic', hitPrim, hitUVW);
-        hitInfo.material.roughness  = primuv(1, 'roughness', hitPrim, hitUVW);
-        hitInfo.material.emissive   = primuv(1, 'emissive', hitPrim, hitUVW);
-        // hitInfo.material.basecolor  = 0.18;
-        // hitInfo.material.specular   = 0.5;
-        // hitInfo.material.metallic   = 1;
-        // hitInfo.material.roughness  = 0.3;
-        // hitInfo.material.emissive   = 0.0;
+        hitInfo.material.type       = primuv(params.geomIndex, 'type', hitPrim, hitUVW);
+        hitInfo.material.basecolor  = primuv(params.geomIndex, 'basecolor', hitPrim, hitUVW);
+        hitInfo.material.specular   = primuv(params.geomIndex, 'specular', hitPrim, hitUVW);
+        hitInfo.material.metallic   = primuv(params.geomIndex, 'metallic', hitPrim, hitUVW);
+        hitInfo.material.roughness  = primuv(params.geomIndex, 'roughness', hitPrim, hitUVW);
+        hitInfo.material.emissive   = primuv(params.geomIndex, 'emissive', hitPrim, hitUVW);
     }
 
     return hitInfo;
@@ -103,11 +106,11 @@ function vector PathTrace(PathTracerParams params; Ray ray)
         int rouletteDepth = params.russianRouletteDepth;
         if (pathLength >= rouletteDepth && rouletteDepth != -1)
         {
-            float continueProbability = min(params.russianRouletteProbability, luminance(throughput));
+            float continueProbability = min(params.russianRouletteProbability, max(throughput.x, max(throughput.y, throughput.z)));
             if (nrandom() > continueProbability)
                 break;
-            throughput /= continueProbability;
-            irrThroughput /= continueProbability;
+            throughput *= 1.0 / continueProbability;
+            irrThroughput *= 1.0 / continueProbability;
         }
 
         // Set this to true to keep the loop going
@@ -116,8 +119,7 @@ function vector PathTrace(PathTracerParams params; Ray ray)
         // Check for intersection with the scene
         RayHitInfo hitInfo = RayIntersect(params, curRay);
     
-        // We hit a triangle in the scene
-        if (hitInfo.hitten > 0)
+        if (hitInfo.hitten > 0 && hitInfo.material.type != MAT_TYPE_LIGHT) // We hit a triangle in the scene
         {
             if (pathLength == maxPathLength)
             {
@@ -125,73 +127,84 @@ function vector PathTrace(PathTracerParams params; Ray ray)
                 break;
             }
 
+            // Override material properties
+            hitInfo.material.basecolor = params.enableAlbedo > 0 ? hitInfo.material.basecolor : {1, 1, 1};
+
             matrix3 tangentToWorld = matrix3(set(hitInfo.tangent, hitInfo.bitangent, hitInfo.normal));
 
             vector diffuseColor = lerp(hitInfo.material.basecolor, {0.0, 0.0, 0.0}, hitInfo.material.metallic);
             vector specularColor = lerp({0.02, 0.02, 0.02}, hitInfo.material.basecolor, hitInfo.material.metallic);
 
-            int enableDiffuseSampling = (hitInfo.material.metallic < 1.0) ? 1 : -1;
-            int enableSpecularSampling = 1;
+            int enableDiffuseSampling = (params.enableDiffuse && hitInfo.material.metallic < 1.0) ? 1 : -1;
+            int enableSpecularSampling = (params.enableSpecular && pathLength == 1) ? 1 : -1;
 
-            vector2 brdfSample = set(nrandom(), nrandom());
-            float selector = nrandom();
-            if (enableSpecularSampling < 0)
-                selector = 0.0;
-            else if (enableDiffuseSampling <0)
-                selector = 1.0;
-
-            vector sampleDir;
-            vector v = normalize(curRay.origin - hitInfo.pos);
-
-            if (selector < 0.5)
+            if (enableDiffuseSampling || enableSpecularSampling)
             {
-                // We're sampling the diffuse BRDF, so sample a cosine-weighted hemisphere
-                sampleDir = SampleCosineHemisphere(brdfSample.x, brdfSample.y);
-                sampleDir = vtransform(sampleDir, tangentToWorld);
-            }
-            else
-            {
-                // We're sampling the GGX specular BRDF
-                sampleDir = SampleDirectionGGX(v, hitInfo.normal, hitInfo.material.roughness, tangentToWorld, brdfSample.x, brdfSample.y);
-            }
+                vector2 brdfSample = set(nrandom(), nrandom());
+                float selector = nrandom();
+                if (enableSpecularSampling < 0)
+                    selector = 0.0;
+                else if (enableDiffuseSampling <0)
+                    selector = 1.0;
 
-            vector h = normalize(v + sampleDir);
-            float nDotL = clamp(dot(sampleDir, hitInfo.normal), 0.0, 1.0);
+                vector sampleDir;
+                vector v = normalize(curRay.origin - hitInfo.pos);
 
-            float diffusePDF = (enableDiffuseSampling > 0) ? nDotL / PI : 0.0;
-            float specularPDF = (enableSpecularSampling > 0) ? GGX_PDF(hitInfo.normal, h, v, hitInfo.material.roughness) : 0.0;
-            float pdf = diffusePDF + specularPDF;
-            if ((enableDiffuseSampling > 0) && (enableSpecularSampling > 0))
-                pdf *= 0.5;
-
-            if (nDotL > 0.0f && pdf > 0.0f && dot(sampleDir, hitInfo.normal) > 0.0f)
-            {
-                // Compute both BRDF's
-                vector brdf = 0.0;
-
-                if (enableDiffuseSampling > 0)
+                if (selector < 0.5)
                 {
-                    brdf += diffuseColor / PI;
+                    // We're sampling the diffuse BRDF, so sample a cosine-weighted hemisphere
+                    sampleDir = SampleCosineHemisphere(brdfSample.x, brdfSample.y);
+                    sampleDir = vtransform(sampleDir, tangentToWorld);
                 }
-                if (enableSpecularSampling > 0)
+                else
                 {
-                    float spec = GGX_Specular(hitInfo.material.roughness, hitInfo.normal, h, v, sampleDir);
-                    brdf += Fresnel(specularColor, h, sampleDir) * spec;
+                    // We're sampling the GGX specular BRDF
+                    sampleDir = SampleDirectionGGX(v, hitInfo.normal, hitInfo.material.roughness, tangentToWorld, brdfSample.x, brdfSample.y);
                 }
 
-                throughput *= brdf * nDotL / pdf;
-                irrThroughput *= nDotL / pdf;
+                vector h = normalize(v + sampleDir);
+                float nDotL = clamp(dot(sampleDir, hitInfo.normal), 0.0, 1.0);
 
-                // Generate the ray for the new path
-                curRay.origin = hitInfo.pos + sampleDir * params.rayPosNormalNudge;
-                curRay.direction = sampleDir;
+                float diffusePDF = (enableDiffuseSampling > 0) ? nDotL / PI : 0.0;
+                float specularPDF = (enableSpecularSampling > 0) ? GGX_PDF(hitInfo.normal, h, v, hitInfo.material.roughness) : 0.0;
+                float pdf = diffusePDF + specularPDF;
+                if ((enableDiffuseSampling > 0) && (enableSpecularSampling > 0))
+                    pdf *= 0.5;
 
-                continueTracing = 1;
+                if (nDotL > 0.0f && pdf > 0.0f && dot(sampleDir, hitInfo.normal) > 0.0f)
+                {
+                    // Compute both BRDF's
+                    vector brdf = 0.0;
+
+                    if (enableDiffuseSampling > 0)
+                    {
+                        brdf += diffuseColor / PI;
+                    }
+                    if (enableSpecularSampling > 0)
+                    {
+                        float spec = GGX_Specular(hitInfo.material.roughness, hitInfo.normal, h, v, sampleDir);
+                        brdf += Fresnel(specularColor, h, sampleDir) * spec;
+                    }
+
+                    throughput *= brdf * nDotL / pdf;
+                    irrThroughput *= nDotL / pdf;
+
+                    // Generate the ray for the new path
+                    curRay.origin = hitInfo.pos + sampleDir * params.rayPosNormalNudge;
+                    curRay.direction = sampleDir;
+
+                    continueTracing = 1;
+                }
             }
         }
-        else
+        else if (hitInfo.hitten > 0 && hitInfo.material.type == MAT_TYPE_LIGHT)  // We hit a triangle in the light
         {
-            // We hit the sky, so we'll sample the sky radiance and then bail out
+            radiance += hitInfo.material.emissive * throughput;
+            irradiance += hitInfo.material.emissive * irrThroughput;
+        }
+        else // We hit the sky
+        {
+            // We sample the sky radiance and then bail out
             vector cubeMapRadiance = SampleEnvironment(curRay.direction);
             radiance += cubeMapRadiance * throughput;
             irradiance += cubeMapRadiance * irrThroughput;
