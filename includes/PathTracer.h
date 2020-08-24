@@ -41,7 +41,7 @@ struct Ray
 
 struct MaterialInfo
 {
-    int type;
+    vector2 texcoord;
     vector basecolor;
     float specular;
     float metallic;
@@ -52,6 +52,8 @@ struct MaterialInfo
 struct RayHitInfo
 {
     int hitten;
+    int prim;
+    vector uvw;
     vector pos;
     vector normal;
     vector tangent;
@@ -59,12 +61,12 @@ struct RayHitInfo
     MaterialInfo material;
 };
 
-function RayHitInfo RayIntersect(PathTracerParams params; Ray ray)
+function RayHitInfo RayIntersect(int geomIndex; float rayMinDistance; float rayMaxDistance; Ray ray)
 {
     RayHitInfo hitInfo;
 
     vector hitPos, hitUVW;
-    int hitPrim = intersect(params.geomIndex, ray.origin + ray.direction * params.rayMinDistance, ray.direction * params.rayMaxDistance, hitPos, hitUVW);
+    int hitPrim = intersect(geomIndex, ray.origin + ray.direction * rayMinDistance, ray.direction * rayMaxDistance, hitPos, hitUVW);
 
     if (hitPrim < 0)
     {
@@ -73,17 +75,19 @@ function RayHitInfo RayIntersect(PathTracerParams params; Ray ray)
     else
     {
         hitInfo.hitten = 1;
+        hitInfo.prim = hitPrim;
+        hitInfo.uvw = hitUVW;
         hitInfo.pos = hitPos;
-        hitInfo.normal = primuv(params.geomIndex, 'N', hitPrim, hitUVW);
-        hitInfo.tangent = primuv(params.geomIndex, 'tangentu', hitPrim, hitUVW);
-        hitInfo.bitangent = primuv(params.geomIndex, 'tangentv', hitPrim, hitUVW);
+        hitInfo.normal = primuv(geomIndex, 'N', hitPrim, hitUVW);
+        hitInfo.tangent = primuv(geomIndex, 'tangentu', hitPrim, hitUVW);
+        hitInfo.bitangent = primuv(geomIndex, 'tangentv', hitPrim, hitUVW);
 
-        hitInfo.material.type       = primuv(params.geomIndex, 'type', hitPrim, hitUVW);
-        hitInfo.material.basecolor  = primuv(params.geomIndex, 'basecolor', hitPrim, hitUVW);
-        hitInfo.material.specular   = primuv(params.geomIndex, 'specular', hitPrim, hitUVW);
-        hitInfo.material.metallic   = primuv(params.geomIndex, 'metallic', hitPrim, hitUVW);
-        hitInfo.material.roughness  = primuv(params.geomIndex, 'roughness', hitPrim, hitUVW);
-        hitInfo.material.emissive   = primuv(params.geomIndex, 'emissive', hitPrim, hitUVW);
+        hitInfo.material.texcoord   = primuv(geomIndex, 'uv', hitPrim, hitUVW);
+        hitInfo.material.basecolor  = primuv(geomIndex, 'basecolor', hitPrim, hitUVW);
+        hitInfo.material.specular   = primuv(geomIndex, 'specular', hitPrim, hitUVW);
+        hitInfo.material.metallic   = primuv(geomIndex, 'metallic', hitPrim, hitUVW);
+        hitInfo.material.roughness  = primuv(geomIndex, 'roughness', hitPrim, hitUVW);
+        hitInfo.material.emissive   = primuv(geomIndex, 'emissive', hitPrim, hitUVW);
     }
 
     return hitInfo;
@@ -117,23 +121,33 @@ function vector PathTrace(PathTracerParams params; Ray ray)
         int continueTracing = -1;
 
         // Check for intersection with the scene
-        RayHitInfo hitInfo = RayIntersect(params, curRay);
-    
-        if (hitInfo.hitten > 0 && hitInfo.material.type != MAT_TYPE_LIGHT) // We hit a triangle in the scene
+        RayHitInfo hitInfo = RayIntersect(params.geomIndex, params.rayMinDistance, params.rayMaxDistance, curRay);
+
+        if (hitInfo.hitten < 0) // We hit the sky
         {
+            // We sample the sky radiance and then bail out
+            vector cubeMapRadiance = SampleEnvironment(curRay.direction);
+            radiance += cubeMapRadiance * throughput;
+            irradiance += cubeMapRadiance * irrThroughput;
+        }
+        else // We hit a triangle in the scene
+        {
+            radiance += hitInfo.material.emissive * throughput;
+            irradiance += hitInfo.material.emissive * irrThroughput;
+
             if (pathLength == maxPathLength)
             {
-                // There's no point in continuing anymore, since none of our scene surfaces are emissive.
+                // There's no point in continuing anymore
                 break;
             }
 
             // Override material properties
             hitInfo.material.basecolor = params.enableAlbedo > 0 ? hitInfo.material.basecolor : {1, 1, 1};
 
-            matrix3 tangentToWorld = matrix3(set(hitInfo.tangent, hitInfo.bitangent, hitInfo.normal));
-
             vector diffuseColor = lerp(hitInfo.material.basecolor, {0.0, 0.0, 0.0}, hitInfo.material.metallic);
             vector specularColor = lerp({0.02, 0.02, 0.02}, hitInfo.material.basecolor, hitInfo.material.metallic);
+
+            matrix3 tangentToWorld = matrix3(set(hitInfo.tangent, hitInfo.bitangent, hitInfo.normal));
 
             int enableDiffuseSampling = (params.enableDiffuse && hitInfo.material.metallic < 1.0) ? 1 : -1;
             int enableSpecularSampling = (params.enableSpecular && pathLength == 1) ? 1 : -1;
@@ -196,18 +210,6 @@ function vector PathTrace(PathTracerParams params; Ray ray)
                     continueTracing = 1;
                 }
             }
-        }
-        else if (hitInfo.hitten > 0 && hitInfo.material.type == MAT_TYPE_LIGHT)  // We hit a triangle in the light
-        {
-            radiance += hitInfo.material.emissive * throughput;
-            irradiance += hitInfo.material.emissive * irrThroughput;
-        }
-        else // We hit the sky
-        {
-            // We sample the sky radiance and then bail out
-            vector cubeMapRadiance = SampleEnvironment(curRay.direction);
-            radiance += cubeMapRadiance * throughput;
-            irradiance += cubeMapRadiance * irrThroughput;
         }
 
         if (continueTracing < 0)
