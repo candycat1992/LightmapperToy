@@ -10,18 +10,18 @@ The project includes three scenes to test different baking methods.
 
 The ground truth path tracing results of the three scenes are listed as follows:
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_cornell.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_toy.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_shaderball.png" width="200">
+<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/ground_truth_shaderball.png" width="250">
 
 ## Lightmap Baker
 
 Diffuse:
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_cornell.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_toy.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_shaderball.png" width="200">
+<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_shaderball.png" width="250">
 
 Directional:
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_cornell.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_toy.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_shaderball.png" width="200">
+<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_shaderball.png" width="250">
 
 HL2:
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_cornell.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_toy.png" width="200"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_shaderball.png" width="200">
+<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_shaderball.png" width="250">
