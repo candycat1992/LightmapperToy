@@ -1,4 +1,8 @@
+#ifndef PATHTRACER_INCLUDED
+#define PATHTRACER_INCLUDED 1
+
 #include "$HIP/includes/Sampling.h"
+#include "$HIP/includes/BRDF.h"
 
 #define MAT_TYPE_LIGHT      0
 #define MAT_TYPE_STATIC     1
@@ -177,10 +181,10 @@ function vector PathTrace(PathTracerParams params; Ray ray)
                 }
 
                 vector h = normalize(v + sampleDir);
-                float nDotL = clamp(dot(sampleDir, hitInfo.normal), 0.0, 1.0);
+                float nDotL = clamp(dot(sampleDir, hitInfo.normal), 0.0f, 1.0f);
 
-                float diffusePDF = (enableDiffuseSampling > 0) ? nDotL / PI : 0.0;
-                float specularPDF = (enableSpecularSampling > 0) ? GGX_PDF(hitInfo.normal, h, v, hitInfo.material.roughness) : 0.0;
+                float diffusePDF = (enableDiffuseSampling > 0) ? nDotL / PI : 0.0f;
+                float specularPDF = (enableSpecularSampling > 0) ? GGX_PDF(hitInfo.normal, h, v, hitInfo.material.roughness) : 0.0f;
                 float pdf = diffusePDF + specularPDF;
                 if ((enableDiffuseSampling > 0) && (enableSpecularSampling > 0))
                     pdf *= 0.5;
@@ -218,3 +222,5 @@ function vector PathTrace(PathTracerParams params; Ray ray)
 
     return radiance;
 }
+
+#endif // PATHTRACER_INCLUDED
