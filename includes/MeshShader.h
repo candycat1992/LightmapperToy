@@ -36,7 +36,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
 
     vector diffuseColor = lerp(material.basecolor, {0.0, 0.0, 0.0}, material.metallic) * (params.enableDiffuse > 0 ? 1.0 : 0.0);
     vector specularColor = lerp({0.02, 0.02, 0.02}, material.basecolor, material.metallic) * (params.enableSpecular > 0 ? 1.0 : 0.0);
-    float sqrtRoughness = sqrt(material.roughness);
+    float roughness = material.roughness;
+    float sqrtRoughness = sqrt(roughness);
 
     matrix3 tangentToWorld = matrix3(set(bakePoint.tangent, bakePoint.bitangent, bakePoint.normal));
     vector normalWS = bakePoint.normal;
@@ -63,13 +64,13 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
 
 			lightmapDirection = lightmapDirection * 2.0 - 1.0;
 
-			vector4 tau = set(bakePoint.normal.x, bakePoint.normal.y, bakePoint.normal.z, 1.0f) * 0.5f;
+			vector4 tau = set(normalWS.x, normalWS.y, normalWS.z, 1.0f) * 0.5f;
 			float halfLambert = dot(tau, set(lightmapDirection.x, lightmapDirection.y, lightmapDirection.z, 1.0f));
 
             vector halfDir = normalize(viewDir + lightmapDirection);
 
 			indirectIrradiance = lightMapColor * halfLambert / rebalancingCoefficient;
-            indirectSpecular = lightMapColor * halfLambert / rebalancingCoefficient * GGX_Specular(material.roughness, bakePoint.normal, halfDir, viewDir, lightmapDirection) * Fresnel(specularColor, halfDir, viewDir);
+            indirectSpecular = StandardShading(normalWS, lightmapDirection, lightMapColor, viewDir, 0.0f, specularColor, roughness);
         }
         else if (params.method == METHOD_HL2)
         {
