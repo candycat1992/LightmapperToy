@@ -21,13 +21,28 @@ The ground truth path tracing results of the three scenes are listed as follows:
 ## Lightmap Baker
 
 Diffuse:
+* A single RGB value containing the result of applying a standard diffuse BRDF to the incoming lighting, with an albedo of 1.0
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_diffuse_shaderball.png" width="250">
+| Cornell | Toy  | Shaderball | Diffuse |
+| --- | ---  | --- | --- |
+| <img src="images/baker_diffuse_cornell.png" width="250"/> | <img src="images/baker_diffuse_toy.png" width="250"/> | <img src="images/baker_diffuse_shaderball.png" width="250"/> | Diffuse & Specular |
+| <img src="images/baker_diffuse_cornell.png" width="250"/> | <img src="images/baker_diffuse_toy.png" width="250"/> | <img src="images/baker_diffuse_shaderball.png" width="250"/> | Diffuse Only |
+| No specular | No specular | No specular | Specular Only |
 
 Directional:
+* Bakes irradiance based on Enlighten's directional approach
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_directional_shaderball.png" width="250">
+| Cornell | Toy  | Shaderball | Directional |
+| --- | ---  | --- | --- |
+| <img src="images/baker_directional_cornell.png" width="250"/> | <img src="images/baker_directional_toy.png" width="250"/> | <img src="images/baker_directional_shaderball.png" width="250"/> | Diffuse & Specular |
+| <img src="images/baker_directional_diffuse_only_cornell.png" width="250"/> | <img src="images/baker_directional_diffuse_only_toy.png" width="250"/> | <img src="images/baker_directional_diffuse_only_shaderball.png" width="250"/> | Diffuse Only |
+| <img src="images/baker_directional_specular_only_cornell.png" width="250"/> | <img src="images/baker_directional_specular_only_toy.png" width="250"/> | <img src="images/baker_directional_specular_only_shaderball.png" width="250"/> | Specular Only |
 
-HL2:
+Half-Life 2:
+* Directional irradiance projected onto the Half-Life 2 basis, making for a total of 3 sets of RGB coefficients (9 floats total)
 
-<img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_cornell.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_toy.png" width="250"> <img src="https://github.com/candycat1992/LightmapperToy/blob/master/images/baker_hl2_shaderball.png" width="250">
+| Cornell | Toy  | Shaderball | Half-Life 2 |
+| --- | ---  | --- | --- |
+| <img src="images/baker_hl2_cornell.png" width="250"/> | <img src="images/baker_hl2_toy.png" width="250"/> | <img src="images/baker_hl2_shaderball.png" width="250"/> | Diffuse & Specular |
+| <img src="images/baker_hl2_cornell.png" width="250"/> | <img src="images/baker_hl2_toy.png" width="250"/> | <img src="images/baker_hl2_shaderball.png" width="250"/> | Diffuse Only |
+| No specular | No specular | No specular | Specular Only |
