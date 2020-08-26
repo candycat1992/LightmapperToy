@@ -27,7 +27,7 @@ Diffuse:
 | --- | ---  | --- | --- |
 | <img src="images/baker_diffuse_cornell.png" width="250"/> | <img src="images/baker_diffuse_toy.png" width="250"/> | <img src="images/baker_diffuse_shaderball.png" width="250"/> | Diffuse & Specular |
 | -- | -- | -- | Diffuse Only |
-| X | X | X | Specular Only |
+| No Supported | Not Supported | Not Supported | Specular Only |
 
 Directional:
 * Bakes irradiance based on Enlighten's directional approach
@@ -45,4 +45,4 @@ Half-Life 2:
 | --- | ---  | --- | --- |
 | <img src="images/baker_hl2_cornell.png" width="250"/> | <img src="images/baker_hl2_toy.png" width="250"/> | <img src="images/baker_hl2_shaderball.png" width="250"/> | Diffuse & Specular |
 | -- | -- | -- | Diffuse Only |
-| X | X | X | Specular Only |
+| Not Supported | Not Supported | Not Supported | Specular Only |
