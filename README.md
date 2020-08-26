@@ -26,8 +26,8 @@ Diffuse:
 | Cornell | Toy  | Shaderball | Diffuse |
 | --- | ---  | --- | --- |
 | <img src="images/baker_diffuse_cornell.png" width="250"/> | <img src="images/baker_diffuse_toy.png" width="250"/> | <img src="images/baker_diffuse_shaderball.png" width="250"/> | Diffuse & Specular |
-| <img src="images/baker_diffuse_cornell.png" width="250"/> | <img src="images/baker_diffuse_toy.png" width="250"/> | <img src="images/baker_diffuse_shaderball.png" width="250"/> | Diffuse Only |
-| No specular | No specular | No specular | Specular Only |
+| -- | -- | -- | Diffuse Only |
+| X | X | X | Specular Only |
 
 Directional:
 * Bakes irradiance based on Enlighten's directional approach
@@ -44,5 +44,5 @@ Half-Life 2:
 | Cornell | Toy  | Shaderball | Half-Life 2 |
 | --- | ---  | --- | --- |
 | <img src="images/baker_hl2_cornell.png" width="250"/> | <img src="images/baker_hl2_toy.png" width="250"/> | <img src="images/baker_hl2_shaderball.png" width="250"/> | Diffuse & Specular |
-| <img src="images/baker_hl2_cornell.png" width="250"/> | <img src="images/baker_hl2_toy.png" width="250"/> | <img src="images/baker_hl2_shaderball.png" width="250"/> | Diffuse Only |
-| No specular | No specular | No specular | Specular Only |
+| -- | -- | -- | Diffuse Only |
+| X | X | X | Specular Only |
