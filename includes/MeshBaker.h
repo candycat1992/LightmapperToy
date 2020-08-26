@@ -304,6 +304,7 @@ function vector4[] LightmapBake(LightmapBakerParams params; BakePoint bakePoint)
             ray.origin = rayStart + rayDirWS * params.rayPosNormalNudge;
 
             vector sampleResult = PathTrace(pathTracerParams, ray);
+            sampleResult /= PI;
 
             baker->AddSample(sampleIdx, sampleResult, rayDirTS, rayDirWS, bakePoint.normal);
         }
@@ -327,6 +328,7 @@ function vector4[] LightmapBake(LightmapBakerParams params; BakePoint bakePoint)
             ray.origin = rayStart + rayDirWS * params.rayPosNormalNudge;
 
             vector sampleResult = PathTrace(pathTracerParams, ray);
+            sampleResult /= PI;
 
             baker->AddSample(sampleIdx, sampleResult, rayDirTS, rayDirWS, bakePoint.normal);
         }
@@ -350,6 +352,7 @@ function vector4[] LightmapBake(LightmapBakerParams params; BakePoint bakePoint)
             ray.origin = rayStart + rayDirWS * params.rayPosNormalNudge;
 
             vector sampleResult = PathTrace(pathTracerParams, ray);
+            sampleResult /= PI;
 
             baker->AddSample(sampleIdx, sampleResult, rayDirTS, rayDirWS, bakePoint.normal);
         }
@@ -373,6 +376,7 @@ function vector4[] LightmapBake(LightmapBakerParams params; BakePoint bakePoint)
             ray.origin = rayStart + rayDirWS * params.rayPosNormalNudge;
 
             vector sampleResult = PathTrace(pathTracerParams, ray);
+            sampleResult /= PI;
 
             baker->AddSample(sampleIdx, sampleResult, rayDirTS, rayDirWS, bakePoint.normal);
         }
@@ -396,6 +400,7 @@ function vector4[] LightmapBake(LightmapBakerParams params; BakePoint bakePoint)
             ray.origin = rayStart + rayDirWS * params.rayPosNormalNudge;
 
             vector sampleResult = PathTrace(pathTracerParams, ray);
+            sampleResult /= PI;
 
             baker->AddSample(sampleIdx, sampleResult, rayDirTS, rayDirWS, bakePoint.normal);
         }

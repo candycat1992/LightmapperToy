@@ -130,9 +130,6 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
             //     indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
         }
 
-        // Need to figure out!
-        indirectIrradiance /= PI;
-
         lighting += indirectIrradiance * (diffuseColor / PI);
         lighting += indirectSpecular;
     }
