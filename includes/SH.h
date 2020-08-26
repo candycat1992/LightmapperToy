@@ -445,6 +445,43 @@ function vector EvalSH4IrradianceGeomerics(vector dir; SH4Color sh)
 }
 
 // ------------------------------------------------------------------------------------------------
+// Computes the specular reflection from radiance encoded as a set of SH coefficients by
+// convolving the radiance with another set of SH coefficients representing the current
+// specular BRDF slice
+// ------------------------------------------------------------------------------------------------
+function vector ConvolutionSHSpecular(vector view; vector normal; vector specularColor; float sqrtRoughness; SH9Color shRadiance)
+{
+    // Make a local coordinate frame in tangent space or world space, with the x-axis
+    // aligned with the view direction and the z-axis aligned with the normal
+    vector zBasis = normal;
+    vector yBasis = normalize(cross(zBasis, view));
+    vector xBasis = normalize(cross(yBasis, zBasis));
+    matrix3 localFrame = matrix3(set(xBasis, yBasis, zBasis));
+    float viewAngle = clamp(dot(normal, view), 0.0f, 1.0f);
+
+    // Look up coefficients from the SH lookup texture to make the SH BRDF
+    SH9Color shBrdf;
+
+    for (int i = 0; i < 3; ++i)
+    {
+        vector4 t0 = SHSpecularLookupA.SampleLevel(LinearSampler, float3(viewAngle, sqrtRoughness, specularColor[i]), 0.0f);
+        vector2 t1 = SHSpecularLookupB.SampleLevel(LinearSampler, float3(viewAngle, sqrtRoughness, specularColor[i]), 0.0f);
+        shBrdf.coefficients[0][i] = t0.x;
+        shBrdf.coefficients[2][i] = t0.y;
+        shBrdf.coefficients[3][i] = t0.z;
+        shBrdf.coefficients[6][i] = t0.w;
+        shBrdf.coefficients[7][i] = t1.x;
+        shBrdf.coefficients[8][i] = t1.y;
+    }
+
+    // Transform the SH BRDF to tangent space/world space
+    shBrdf = RotateSH9(shBrdf, localFrame);
+
+    // Convolve the BRDF slice with the environment radiance
+    return SHDotProduct(shBrdf, shRadiance);
+}
+
+// ------------------------------------------------------------------------------------------------
 // Computes approximated specular from radiance encoded as a set of SH coefficients by
 // approximating a directional light in the "dominant" direction.
 // From "Precomputed Global Illumination in Frostbite"
@@ -490,6 +527,41 @@ function vector PunctualSHSpecular(vector view; vector normal; matrix3 tangentFr
     }
 
     return result / 3.0f;
+}
+
+// ------------------------------------------------------------------------------------------------
+// Computes approximated specular from radiance encoded as a set of SH coefficients by
+// treating the SH radiance as a pre-filtered environment map
+// ------------------------------------------------------------------------------------------------
+function vector PrefilteredSHSpecular(vector view; vector normal; matrix3 tangentFrame; vector specularColor; float sqrtRoughness; SH9Color shRadiance)
+{
+    vector reflectDir = reflect(-view, normal);
+
+    float roughness = sqrtRoughness * sqrtRoughness;
+
+    // Pre-filter the SH radiance with the GGX NDF using a fitted approximation
+    float l1Scale = 1.66711256633276f / (1.65715038133932f + roughness);
+    float l2Scale = 1.56127990596116f / (0.96989757593282f + roughness) - 0.599972342361123f;
+
+    SH9Color filteredSHRadiance = shRadiance;
+    filteredSHRadiance.coefficients[1] *= l1Scale;
+    filteredSHRadiance.coefficients[2] *= l1Scale;
+    filteredSHRadiance.coefficients[3] *= l1Scale;
+    filteredSHRadiance.coefficients[4] *= l2Scale;
+    filteredSHRadiance.coefficients[5] *= l2Scale;
+    filteredSHRadiance.coefficients[6] *= l2Scale;
+    filteredSHRadiance.coefficients[7] *= l2Scale;
+    filteredSHRadiance.coefficients[8] *= l2Scale;
+
+    vector lookupDir = normalize(lerp(reflectDir, normal, clamp(roughness - 0.25f, 0.0f, 1.0f)));
+
+    vector specLightColor = max(EvalSH9(lookupDir, filteredSHRadiance), 0.0f);
+
+    float nDotV = clamp(dot(normal, view), 0.0f, 1.0f);
+    vector2 AB = EnvSpecularLookup.SampleLevel(LinearSampler, float2(nDotV, sqrtRoughness), 0.0f);
+    vector envBRDF = specularColor * AB.x + AB.y;
+
+    return envBRDF * specLightColor;
 }
 
 #endif // SH_INCLUDED

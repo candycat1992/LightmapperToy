@@ -99,14 +99,14 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
             else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_GEOMERICS)
                 indirectIrradiance = EvalSH4IrradianceGeomerics(normalWS, shRadiance);
 
-            // if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
-            //     indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
-            if (params.shSettings.specularMode == SH_SPECULAR_MODE_DOMINANT)
+            if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
+                indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_DOMINANT)
                  indirectSpecular = FrostbiteSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, shRadiance);
             else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PUNCTUAL)
                 indirectSpecular = PunctualSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
-            // else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
-            //     indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
+                indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
         }
         else if (params.method == METHOD_SH9)
         {
@@ -120,14 +120,14 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
             else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_GEOMERICS)
                 indirectIrradiance = EvalSH4IrradianceGeomerics(normalWS, ConvertToSH4(shRadiance));
 
-            // if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
-            //     indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
-            if (params.shSettings.specularMode == SH_SPECULAR_MODE_DOMINANT)
+            if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
+                indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_DOMINANT)
                  indirectSpecular = FrostbiteSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH4(shRadiance));
             else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PUNCTUAL)
                 indirectSpecular = PunctualSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, shRadiance);
-            // else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
-            //     indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
+                indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
         }
 
         lighting += indirectIrradiance * (diffuseColor / PI);
