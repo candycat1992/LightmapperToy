@@ -2,6 +2,7 @@
 #define SH_INCLUDED 1
 
 #include "$HIP/includes/BRDF.h"
+#include "$HIP/includes/Utilities.h"
 
 #define CosineA0 PI
 #define CosineA1 (2.0f * PI) / 3.0f
@@ -414,6 +415,184 @@ function vector EvalSH9Irradiance(vector dir; SH9Color sh)
 }
 
 //-------------------------------------------------------------------------------------------------
+// Rotates 3-band SH coefficients
+//-------------------------------------------------------------------------------------------------
+function SH9 RotateSH9(SH9 sh; matrix3 rotation)
+{
+    float r00 = getcomp(rotation, 0, 0);
+    float r10 = getcomp(rotation, 0, 1);
+    float r20 = getcomp(rotation, 0, 2);
+
+    float r01 = getcomp(rotation, 1, 0);
+    float r11 = getcomp(rotation, 1, 1);
+    float r21 = getcomp(rotation, 1, 2);
+
+    float r02 = getcomp(rotation, 2, 0);
+    float r12 = getcomp(rotation, 2, 1);
+    float r22 = getcomp(rotation, 2, 2);
+
+    SH9 result;
+
+    // Constant
+    result.coefficients[0] = sh.coefficients[0];
+
+    // Linear
+    result.coefficients[1] = r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
+    result.coefficients[3] = r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+
+    // Quadratic
+    float t41 = r01 * r00;
+    float t43 = r11 * r10;
+    float t48 = r11 * r12;
+    float t50 = r01 * r02;
+    float t55 = r02 * r02;
+    float t57 = r22 * r22;
+    float t58 = r12 * r12;
+    float t61 = r00 * r02;
+    float t63 = r10 * r12;
+    float t68 = r10 * r10;
+    float t70 = r01 * r01;
+    float t72 = r11 * r11;
+    float t74 = r00 * r00;
+    float t76 = r21 * r21;
+    float t78 = r20 * r20;
+
+    float v173 = 0.1732050808e1f;
+    float v577 = 0.5773502693e0f;
+    float v115 = 0.1154700539e1f;
+    float v288 = 0.2886751347e0f;
+    float v866 = 0.8660254040e0f;
+
+    float r[];
+    resize(r, 25);
+    r[0] = r11 * r00 + r01 * r10;
+    r[1] = -r01 * r12 - r11 * r02;
+    r[2] = v173 * r02 * r12;
+    r[3] = -r10 * r02 - r00 * r12;
+    r[4] = r00 * r10 - r01 * r11;
+    r[5] = -r11 * r20 - r21 * r10;
+    r[6] = r11 * r22 + r21 * r12;
+    r[7] = -v173 * r22 * r12;
+    r[8] = r20 * r12 + r10 * r22;
+    r[9] = -r10 * r20 + r11 * r21;
+    r[10] = -v577* (t41 + t43) + v115 * r21 * r20;
+    r[11] = v577* (t48 + t50) - v115 * r21 * r22;
+    r[12] = -0.5f * (t55 + t58) + t57;
+    r[13] = v577 * (t61 + t63) - v115 * r20 * r22;
+    r[14] = v288 * (t70 - t68 + t72 - t74) - v577 * (t76 - t78);
+    r[15] = -r01 * r20 - r21 * r00;
+    r[16] = r01 * r22 + r21 * r02;
+    r[17] = -v173 * r22 * r02;
+    r[18] = r00 * r22 + r20 * r02;
+    r[19] = -r00 * r20 + r01 * r21;
+    r[20] = t41 - t43;
+    r[21] = -t50 + t48;
+    r[22] = v866 * (t55 - t58);
+    r[23] = t63 - t61;
+    r[24] = 0.5f *(t74 - t68 - t70 + t72);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int base = i * 5;
+        result.coefficients[4 + i] = r[base + 0] * sh.coefficients[4] + r[base + 1] * sh.coefficients[5] +
+                                     r[base + 2] * sh.coefficients[6] + r[base + 3] * sh.coefficients[7] +
+                                     r[base + 4] * sh.coefficients[8];
+    }
+
+    return result;
+}
+
+//-------------------------------------------------------------------------------------------------
+// Rotates 3-band SH coefficients
+//-------------------------------------------------------------------------------------------------
+function SH9Color RotateSH9(SH9Color sh; matrix3 rotation)
+{
+    float r00 = getcomp(rotation, 0, 0);
+    float r10 = getcomp(rotation, 0, 1);
+    float r20 = getcomp(rotation, 0, 2);
+
+    float r01 = getcomp(rotation, 1, 0);
+    float r11 = getcomp(rotation, 1, 1);
+    float r21 = getcomp(rotation, 1, 2);
+
+    float r02 = getcomp(rotation, 2, 0);
+    float r12 = getcomp(rotation, 2, 1);
+    float r22 = getcomp(rotation, 2, 2);
+
+    SH9Color result;
+
+    // Constant
+    result.coefficients[0] = sh.coefficients[0];
+
+    // Linear
+    result.coefficients[1] = r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
+    result.coefficients[3] = r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+
+    // Quadratic
+    float t41 = r01 * r00;
+    float t43 = r11 * r10;
+    float t48 = r11 * r12;
+    float t50 = r01 * r02;
+    float t55 = r02 * r02;
+    float t57 = r22 * r22;
+    float t58 = r12 * r12;
+    float t61 = r00 * r02;
+    float t63 = r10 * r12;
+    float t68 = r10 * r10;
+    float t70 = r01 * r01;
+    float t72 = r11 * r11;
+    float t74 = r00 * r00;
+    float t76 = r21 * r21;
+    float t78 = r20 * r20;
+
+    float v173 = 0.1732050808e1f;
+    float v577 = 0.5773502693e0f;
+    float v115 = 0.1154700539e1f;
+    float v288 = 0.2886751347e0f;
+    float v866 = 0.8660254040e0f;
+
+    float r[];
+    resize(r, 25);
+    r[0] = r11 * r00 + r01 * r10;
+    r[1] = -r01 * r12 - r11 * r02;
+    r[2] =  v173 * r02 * r12;
+    r[3] = -r10 * r02 - r00 * r12;
+    r[4] = r00 * r10 - r01 * r11;
+    r[5] = - r11 * r20 - r21 * r10;
+    r[6] = r11 * r22 + r21 * r12;
+    r[7] = -v173 * r22 * r12;
+    r[8] = r20 * r12 + r10 * r22;
+    r[9] = -r10 * r20 + r11 * r21;
+    r[10] = -v577 * (t41 + t43) + v115 * r21 * r20;
+    r[11] = v577 * (t48 + t50) - v115 * r21 * r22;
+    r[12] = -0.5000000000e0f * (t55 + t58) + t57;
+    r[13] = v577 * (t61 + t63) - v115 * r20 * r22;
+    r[14] =  v288 * (t70 - t68 + t72 - t74) - v577 * (t76 - t78);
+    r[15] = -r01 * r20 -  r21 * r00;
+    r[16] = r01 * r22 + r21 * r02;
+    r[17] = -v173 * r22 * r02;
+    r[18] = r00 * r22 + r20 * r02;
+    r[19] = -r00 * r20 + r01 * r21;
+    r[20] = t41 - t43;
+    r[21] = -t50 + t48;
+    r[22] =  v866 * (t55 - t58);
+    r[23] = t63 - t61;
+    r[24] = 0.5000000000e0f * (t74 - t68 - t70 +  t72);
+
+    for (int i = 0; i < 5; ++i)
+    {
+        int base = i * 5;
+        result.coefficients[4 + i] = r[base + 0] * sh.coefficients[4] + r[base + 1] * sh.coefficients[5] +
+                                     r[base + 2] * sh.coefficients[6] + r[base + 3] * sh.coefficients[7] +
+                                     r[base + 4] * sh.coefficients[8];
+    }
+
+    return result;
+}
+
+//-------------------------------------------------------------------------------------------------
 // Evaluates the irradiance from a set of SH4 coeffecients using the non-linear fit from
 // the paper by Graham Hazel from Geomerics.
 // https://grahamhazel.com/blog/2017/12/22/converting-sh-radiance-to-irradiance/
@@ -464,8 +643,8 @@ function vector ConvolutionSHSpecular(vector view; vector normal; vector specula
 
     for (int i = 0; i < 3; ++i)
     {
-        vector4 t0 = SHSpecularLookupA.SampleLevel(LinearSampler, float3(viewAngle, sqrtRoughness, specularColor[i]), 0.0f);
-        vector2 t1 = SHSpecularLookupB.SampleLevel(LinearSampler, float3(viewAngle, sqrtRoughness, specularColor[i]), 0.0f);
+        vector4 t0 = SampleTexture3D(chs("../baker_sh_specular_a_path"), viewAngle, sqrtRoughness, specularColor[i], 32);
+        vector2 t1 = SampleTexture3D(chs("../baker_sh_specular_b_path"), viewAngle, sqrtRoughness, specularColor[i], 32);
         shBrdf.coefficients[0][i] = t0.x;
         shBrdf.coefficients[2][i] = t0.y;
         shBrdf.coefficients[3][i] = t0.z;
@@ -558,7 +737,7 @@ function vector PrefilteredSHSpecular(vector view; vector normal; matrix3 tangen
     vector specLightColor = max(EvalSH9(lookupDir, filteredSHRadiance), 0.0f);
 
     float nDotV = clamp(dot(normal, view), 0.0f, 1.0f);
-    vector2 AB = EnvSpecularLookup.SampleLevel(LinearSampler, float2(nDotV, sqrtRoughness), 0.0f);
+    vector AB = SampleTexture2D(chs("../baker_sh_specular_lut_path"), nDotV, sqrtRoughness);
     vector envBRDF = specularColor * AB.x + AB.y;
 
     return envBRDF * specLightColor;

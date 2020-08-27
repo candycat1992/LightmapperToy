@@ -3,20 +3,11 @@
 
 #include "$HIP/includes/Sampling.h"
 #include "$HIP/includes/BRDF.h"
+#include "$HIP/includes/Utilities.h"
 
 #define MAT_TYPE_LIGHT      0
 #define MAT_TYPE_STATIC     1
 #define MAT_TYPE_MOVABLE    2
-
-// =================================================
-// Helpers
-// =================================================
-
-function vector SampleEnvironment(vector rayDir)
-{
-    matrix envTrans = maketransform(0, 0, {0, 0, 0}, set(0, -chf(chs("../env_light_path") + "/ry"), 0));
-    return environment(ch(chs("../env_light_path") + "/env_map"), rayDir * envTrans);
-}
 
 // =================================================
 // Ray tracing
@@ -26,6 +17,7 @@ struct PathTracerParams
 {
     int geomIndex = 0;
     int seed = 0;
+    int enableEnvmap = 1;
     int enableDiffuse = 1;
     int enableSpecular = 1;
     int enableAlbedo = 1;
@@ -131,8 +123,8 @@ function vector PathTrace(PathTracerParams params; Ray ray)
         {
             // We sample the sky radiance and then bail out
             vector cubeMapRadiance = SampleEnvironment(curRay.direction);
-            radiance += cubeMapRadiance * throughput;
-            irradiance += cubeMapRadiance * irrThroughput;
+            radiance += cubeMapRadiance * throughput * (params.enableEnvmap > 0 ? 1 : 0);
+            irradiance += cubeMapRadiance * irrThroughput * (params.enableEnvmap > 0 ? 1 : 0);
         }
         else // We hit a triangle in the scene
         {
@@ -153,8 +145,8 @@ function vector PathTrace(PathTracerParams params; Ray ray)
 
             matrix3 tangentToWorld = matrix3(set(hitInfo.tangent, hitInfo.bitangent, hitInfo.normal));
 
-            int enableDiffuseSampling = (params.enableDiffuse && hitInfo.material.metallic < 1.0) ? 1 : -1;
-            int enableSpecularSampling = (params.enableSpecular && pathLength == 1) ? 1 : -1;
+            int enableDiffuseSampling = (params.enableDiffuse > 0 && hitInfo.material.metallic < 1.0) ? 1 : -1;
+            int enableSpecularSampling = (params.enableSpecular > 0 && pathLength == 1) ? 1 : -1;
 
             if (enableDiffuseSampling || enableSpecularSampling)
             {
