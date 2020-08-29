@@ -6,15 +6,17 @@ This project is a hobby lightmapper completely based on Houdini VEX nodes. Basic
 
 There are just four nodes inside the obj tab:
 
-<img src="images/scene_nodes.png" width="600"/>
+<img src="images/scene_nodes.png" width="400"/>
+
+Lock the viewport with the CAM_MAIN node. Change the environment map inside the ENV_LIGHT node (all HDRI textures are from <a href="https://hdrihaven.com/hdris/" target="_blank">HDRI Haven</a>).
 
 The SCENE_ROOM node is responsible for setting up the scene geometries (click the "Room Object" menu to change different scenes, toggle the "Enable Light" to enable or hide the area light on the top):
 
-<img src="images/scene_room_node.png" width="600"/>
+<img src="images/scene_room_node.png" width="800"/>
 
 The RENDERER node is responsible for all the calculating. Change the "Shading Method" menu to switch between path tracer and lightmapper. More detail settings are under "Ground Truth" and "Lightmap Baker" tabs:
 
-<img src="images/renderer_node.png" width="600"/>
+<img src="images/renderer_node.png" width="800"/>
 
 # Results
 
