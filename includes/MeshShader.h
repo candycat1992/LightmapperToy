@@ -5,10 +5,13 @@
 
 #define SH_DIFFUSE_MODE_CONVOLUTION     0
 #define SH_DIFFUSE_MODE_GEOMERICS       1
+#define SH_DIFFUSE_MODE_AHD             2
+
 #define SH_SPECULAR_MODE_CONVOLUTION    0
 #define SH_SPECULAR_MODE_DOMINANT       1
 #define SH_SPECULAR_MODE_PUNCTUAL       2
 #define SH_SPECULAR_MODE_PREFILTERED    3
+#define SH_SPECULAR_MODE_AHD            4
 
 struct SHSettings
 {
@@ -98,6 +101,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
                 indirectIrradiance = EvalSH4Irradiance(normalWS, shRadiance);
             else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_GEOMERICS)
                 indirectIrradiance = EvalSH4IrradianceGeomerics(normalWS, shRadiance);
+            else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_AHD)
+                indirectIrradiance = EvalSH4IrradianceAmbientAndHighlightDiretion(normalWS, shRadiance);
 
             if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
                 indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
@@ -107,6 +112,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
                 indirectSpecular = PunctualSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
             else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
                 indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, ConvertToSH9(shRadiance));
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_AHD)
+                indirectSpecular = AmbientAndHighlightDiretionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, shRadiance);
         }
         else if (params.method == METHOD_SH9)
         {
@@ -119,6 +126,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
                 indirectIrradiance = EvalSH9Irradiance(normalWS, shRadiance);
             else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_GEOMERICS)
                 indirectIrradiance = EvalSH4IrradianceGeomerics(normalWS, ConvertToSH4(shRadiance));
+            else if (params.shSettings.diffuseMode == SH_DIFFUSE_MODE_AHD)
+                indirectIrradiance = EvalSH4IrradianceAmbientAndHighlightDiretion(normalWS, shRadiance);
 
             if (params.shSettings.specularMode == SH_SPECULAR_MODE_CONVOLUTION)
                 indirectSpecular = ConvolutionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, shRadiance);
@@ -128,6 +137,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
                 indirectSpecular = PunctualSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, shRadiance);
             else if (params.shSettings.specularMode == SH_SPECULAR_MODE_PREFILTERED)
                 indirectSpecular = PrefilteredSHSpecular(viewDir, normalWS, tangentToWorld, specularColor, sqrtRoughness, shRadiance);
+            else if (params.shSettings.specularMode == SH_SPECULAR_MODE_AHD)
+                indirectSpecular = AmbientAndHighlightDiretionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, shRadiance);
         }
 
         lighting += indirectIrradiance * (diffuseColor / PI);

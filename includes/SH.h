@@ -269,6 +269,127 @@ function vector EvalSH4Irradiance(vector dir; SH4Color sh)
 	return SHDotProduct(dirSH, sh);
 }
 
+//-------------------------------------------------------------------------------------------------
+// Rotates 2-band SH coefficients
+//-------------------------------------------------------------------------------------------------
+function SH4 RotateSH4(SH4 sh; matrix3 rotation)
+{
+    float r00 = getcomp(rotation, 0, 0);
+    float r10 = getcomp(rotation, 0, 1);
+    float r20 = getcomp(rotation, 0, 2);
+
+    float r01 = getcomp(rotation, 1, 0);
+    float r11 = getcomp(rotation, 1, 1);
+    float r21 = getcomp(rotation, 1, 2);
+
+    float r02 = getcomp(rotation, 2, 0);
+    float r12 = getcomp(rotation, 2, 1);
+    float r22 = getcomp(rotation, 2, 2);
+
+    SH4 result;
+
+    // Constant
+    result.coefficients[0] = sh.coefficients[0];
+
+    // Linear
+    result.coefficients[1] =  r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
+    result.coefficients[3] =  r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+
+    return result;
+}
+
+function SH4Color RotateSH4(SH4Color sh; matrix3 rotation)
+{
+    float r00 = getcomp(rotation, 0, 0);
+    float r10 = getcomp(rotation, 0, 1);
+    float r20 = getcomp(rotation, 0, 2);
+
+    float r01 = getcomp(rotation, 1, 0);
+    float r11 = getcomp(rotation, 1, 1);
+    float r21 = getcomp(rotation, 1, 2);
+
+    float r02 = getcomp(rotation, 2, 0);
+    float r12 = getcomp(rotation, 2, 1);
+    float r22 = getcomp(rotation, 2, 2);
+
+    SH4Color result;
+
+    // Constant
+    result.coefficients[0] = sh.coefficients[0];
+
+    // Linear
+    result.coefficients[1] =  r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
+    result.coefficients[3] =  r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+
+    return result;
+}
+
+//-------------------------------------------------------------------------------------------------
+// Computes the "optimal linear direction" for a set of SH coefficients
+//-------------------------------------------------------------------------------------------------
+function vector OptimalLinearDirection(SH4 sh)
+{
+    float x = sh.coefficients[3];
+    float y = sh.coefficients[1];
+    float z = sh.coefficients[2];
+    return normalize(set(x, y, z));
+}
+
+function vector OptimalLinearDirection(SH4Color sh)
+{
+    float x = dot(sh.coefficients[3], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
+    float y = dot(sh.coefficients[1], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
+    float z = dot(sh.coefficients[2], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
+    return normalize(set(x, y, z));
+}
+
+//-------------------------------------------------------------------------------------------------
+// Computes the direction and color of a directional light and a ambient color that approximates a set of SH
+// coefficients
+//-------------------------------------------------------------------------------------------------
+function void ApproximateAmbientAndDirectionalLight(SH4Color sh; vector ambient; vector direction; vector color)
+{
+    direction = OptimalLinearDirection(sh);
+    SH4 dirSH = ProjectOntoSH4(direction, 1.0f);
+
+#if 1 // Uses Sébastien Lagarde's method from https://seblagarde.wordpress.com/2011/10/09/dive-in-sh-buffer-idea/
+
+    float denom = SHDotProduct(dirSH, dirSH);
+    vector numer = SHDotProduct(dirSH, sh);
+    color = max(numer / denom, 0.0);
+
+    // Subtract dominant light from original lighting environment
+    sh.coefficients[0] -= dirSH.coefficients[0] * color;
+
+    // With the remaining light, fit an ambient light
+    float shAmbient = 0.282095f;
+    denom = shAmbient * shAmbient;
+
+    // Find the color of the ambient light
+    //ambient = sh.coefficients[0] * shAmbient / denom;
+    ambient = sh.coefficients[0] * shAmbient * PI;
+
+#else // Uses Peter Pike-Sloan's method from "Stupid SH Tricks"
+
+    sh.coefficients[0] *= PI;
+    sh.coefficients[1] *= 2.0 * PI / 3.0;
+    sh.coefficients[2] *= 2.0 * PI / 3.0;
+    sh.coefficients[3] *= 2.0 * PI / 3.0;
+
+    float dirSH0 = dirSH.coefficients[0];
+    vector sh0 = sh.coefficients[0];
+
+    dirSH.coefficients[0] = 0.0f;
+    sh.coefficients[0] = 0.0f;
+
+    color = max(SHDotProduct(dirSH, sh) * 867.0f / (316.0f * PI), 0.0);
+    ambient = (sh0 - color * (8.0f * sqrt(PI) / 17.0)) * (sqrt(PI) / 2.0);
+
+#endif
+}
+
 // ================================================================================================
 // SH9
 // ================================================================================================
@@ -437,9 +558,9 @@ function SH9 RotateSH9(SH9 sh; matrix3 rotation)
     result.coefficients[0] = sh.coefficients[0];
 
     // Linear
-    result.coefficients[1] = r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[1] =  r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
     result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
-    result.coefficients[3] = r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+    result.coefficients[3] =  r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
 
     // Quadratic
     float t41 = r01 * r00;
@@ -526,9 +647,9 @@ function SH9Color RotateSH9(SH9Color sh; matrix3 rotation)
     result.coefficients[0] = sh.coefficients[0];
 
     // Linear
-    result.coefficients[1] = r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
+    result.coefficients[1] =  r11 * sh.coefficients[1] - r12 * sh.coefficients[2] + r10 * sh.coefficients[3];
     result.coefficients[2] = -r21 * sh.coefficients[1] + r22 * sh.coefficients[2] - r20 * sh.coefficients[3];
-    result.coefficients[3] = r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
+    result.coefficients[3] =  r01 * sh.coefficients[1] - r02 * sh.coefficients[2] + r00 * sh.coefficients[3];
 
     // Quadratic
     float t41 = r01 * r00;
@@ -593,7 +714,7 @@ function SH9Color RotateSH9(SH9Color sh; matrix3 rotation)
 }
 
 //-------------------------------------------------------------------------------------------------
-// Evaluates the irradiance from a set of SH4 coeffecients using the non-linear fit from
+// Evaluates the irradiance from a set of SH4 coefficients using the non-linear fit from
 // the paper by Graham Hazel from Geomerics.
 // https://grahamhazel.com/blog/2017/12/22/converting-sh-radiance-to-irradiance/
 //-------------------------------------------------------------------------------------------------
@@ -621,6 +742,23 @@ function vector EvalSH4IrradianceGeomerics(vector dir; SH4Color sh)
     return set(EvalSH4IrradianceGeomerics(dir, shr),
                EvalSH4IrradianceGeomerics(dir, shg),
                EvalSH4IrradianceGeomerics(dir, shb));
+}
+
+//-------------------------------------------------------------------------------------------------
+// Evaluates the irradiance from a directional and ambient light extracted from SH coefficients
+//-------------------------------------------------------------------------------------------------
+function vector EvalSH4IrradianceAmbientAndHighlightDiretion(vector dir; SH4Color sh)
+{
+    vector ambient, direction, color;
+    ApproximateAmbientAndDirectionalLight(sh, ambient, direction, color);
+
+    return ambient + clamp(dot(dir, direction), 0.0f, 1.0f) * color;
+}
+
+function vector EvalSH4IrradianceAmbientAndHighlightDiretion(vector dir; SH9Color sh)
+{
+    SH4Color sh4 = ConvertToSH4(sh);
+    return EvalSH4IrradianceAmbientAndHighlightDiretion(dir, sh4);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -741,6 +879,27 @@ function vector PrefilteredSHSpecular(vector view; vector normal; matrix3 tangen
     vector envBRDF = specularColor * AB.x + AB.y;
 
     return envBRDF * specLightColor;
+}
+
+//-------------------------------------------------------------------------------------------------
+// Evaluates the irradiance from a directional and ambient light extracted from SH coefficients
+//-------------------------------------------------------------------------------------------------
+function vector AmbientAndHighlightDiretionSHSpecular(vector view; vector normal; vector specularColor; float sqrtRoughness; SH4Color shRadiance)
+{
+    float roughness = sqrtRoughness * sqrtRoughness;
+
+    vector ambient = 0.0f;
+    vector direction = 0.0f;
+    vector color = 0.0f;
+    ApproximateAmbientAndDirectionalLight(shRadiance, ambient, direction, color);
+
+    return StandardShading(normal, direction, color, view, 0.0f, specularColor, roughness);
+}
+
+function vector AmbientAndHighlightDiretionSHSpecular(vector view; vector normal; vector specularColor; float sqrtRoughness; SH9Color shRadiance)
+{
+    SH4Color sh4Radiance = ConvertToSH4(shRadiance);
+    return AmbientAndHighlightDiretionSHSpecular(view, normal, specularColor, sqrtRoughness, sh4Radiance);
 }
 
 #endif // SH_INCLUDED
