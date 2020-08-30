@@ -85,9 +85,9 @@ We compare the lighting results of all the methods. As usual, ground truth goes 
 
 # References
 
-[1] <a href="https://mynameismjp.wordpress.com/2016/10/09/sg-series-part-6-step-into-the-baking-lab/" target="_blank">SG Series Part 6: Step Into The Baking Lab</a>
-[2] <a href="https://www.ppsloan.org/publications/StupidSH36.pdf" target="_blank">Stupid Spherical Harmonics (SH) Tricks</a>
-[3] <a href="https://seblagarde.wordpress.com/2011/10/09/dive-in-sh-buffer-idea/" target="_blank">Dive in SH Buffer Idea</a>
-[4] <a href="https://www.ea.com/frostbite/news/precomputed-global-illumination-in-frostbite" target="_blank">Precomputed Global Illumination in Frostbite</a>
-[5] <a href="http://miciwan.com/SIGGRAPH2013/Lighting%20Technology%20of%20The%20Last%20Of%20Us.pdf" target="_blank">Lighting Technology of The Last of Us</a>
-[6] <a href="https://github.com/kayru/Probulator" target="_blank">Probulator</a>
+* <a href="https://mynameismjp.wordpress.com/2016/10/09/sg-series-part-6-step-into-the-baking-lab/" target="_blank">SG Series Part 6: Step Into The Baking Lab</a>
+* <a href="https://www.ppsloan.org/publications/StupidSH36.pdf" target="_blank">Stupid Spherical Harmonics (SH) Tricks</a>
+* <a href="https://seblagarde.wordpress.com/2011/10/09/dive-in-sh-buffer-idea/" target="_blank">Dive in SH Buffer Idea</a>
+* <a href="https://www.ea.com/frostbite/news/precomputed-global-illumination-in-frostbite" target="_blank">Precomputed Global Illumination in Frostbite</a>
+* <a href="http://miciwan.com/SIGGRAPH2013/Lighting%20Technology%20of%20The%20Last%20Of%20Us.pdf" target="_blank">Lighting Technology of The Last of Us</a>
+* <a href="https://github.com/kayru/Probulator" target="_blank">Probulator</a>
