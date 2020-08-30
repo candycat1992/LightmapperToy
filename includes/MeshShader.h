@@ -37,8 +37,8 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
     // Override material properties
     material.basecolor = params.enableAlbedo > 0 ? material.basecolor : {1, 1, 1};
 
-    vector diffuseColor = lerp(material.basecolor, {0.0, 0.0, 0.0}, material.metallic) * (params.enableDiffuse > 0 ? 1.0 : 0.0);
-    vector specularColor = lerp({0.02, 0.02, 0.02}, material.basecolor, material.metallic) * (params.enableSpecular > 0 ? 1.0 : 0.0);
+    vector diffuseColor = lerp(material.basecolor, {0.0, 0.0, 0.0}, material.metallic);
+    vector specularColor = lerp({0.02, 0.02, 0.02}, material.basecolor, material.metallic);
     float roughness = material.roughness;
     float sqrtRoughness = sqrt(roughness);
 
@@ -140,6 +140,9 @@ function vector MeshShade(MeshShaderParams params; MaterialInfo material; BakePo
             else if (params.shSettings.specularMode == SH_SPECULAR_MODE_AHD)
                 indirectSpecular = AmbientAndHighlightDiretionSHSpecular(viewDir, normalWS, specularColor, sqrtRoughness, shRadiance);
         }
+
+        indirectIrradiance *= params.enableDiffuse > 0 ? 1.0 : 0.0;
+        indirectSpecular *= params.enableSpecular > 0 ? 1.0 : 0.0;
 
         lighting += indirectIrradiance * (diffuseColor / PI);
         lighting += indirectSpecular;

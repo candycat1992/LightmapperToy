@@ -339,9 +339,9 @@ function vector OptimalLinearDirection(SH4 sh)
 
 function vector OptimalLinearDirection(SH4Color sh)
 {
-    float x = dot(sh.coefficients[3], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
-    float y = dot(sh.coefficients[1], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
-    float z = dot(sh.coefficients[2], set(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f));
+    float x = dot(-sh.coefficients[3], set(0.3f, 0.59f, 0.11f));
+    float y = dot(-sh.coefficients[1], set(0.3f, 0.59f, 0.11f));
+    float z = dot( sh.coefficients[2], set(0.3f, 0.59f, 0.11f));
     return normalize(set(x, y, z));
 }
 
@@ -368,8 +368,8 @@ function void ApproximateAmbientAndDirectionalLight(SH4Color sh; vector ambient;
     denom = shAmbient * shAmbient;
 
     // Find the color of the ambient light
-    //ambient = sh.coefficients[0] * shAmbient / denom;
-    ambient = sh.coefficients[0] * shAmbient * PI;
+    ambient = sh.coefficients[0] * shAmbient / denom;
+    //ambient = sh.coefficients[0] * shAmbient * PI;
 
 #else // Uses Peter Pike-Sloan's method from "Stupid SH Tricks"
 
@@ -888,9 +888,7 @@ function vector AmbientAndHighlightDiretionSHSpecular(vector view; vector normal
 {
     float roughness = sqrtRoughness * sqrtRoughness;
 
-    vector ambient = 0.0f;
-    vector direction = 0.0f;
-    vector color = 0.0f;
+    vector ambient, direction, color;
     ApproximateAmbientAndDirectionalLight(shRadiance, ambient, direction, color);
 
     return StandardShading(normal, direction, color, view, 0.0f, specularColor, roughness);
